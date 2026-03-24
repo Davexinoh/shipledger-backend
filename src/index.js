@@ -1,41 +1,25 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-const HOST = 'localhost';
 
-app.use(helmet());
-app.use(cors());
-app.use(morgan('dev'));
+// // MIDDLEWARE
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(require('cors')({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'ShipLedger API is running',
-    version: '1.0.0',
-    status: 'ok'
-  });
-});
+// // ROUTES
+app.use('/auth', require('./routes/auth'));
+app.use('/attestation', require('./routes/attestation'));
 
+// // HEALTH
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'shipledger-backend' });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// // START
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`// SHIPLEDGER_BACKEND running on port ${PORT}`);
 });
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-app.listen(PORT, HOST, () => {
-  console.log(`ShipLedger backend running at http://${HOST}:${PORT}`);
-});
-
-module.exports = app;
