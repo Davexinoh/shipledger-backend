@@ -1,6 +1,14 @@
 const { EAS, SchemaEncoder } = require('@ethereum-attestation-service/eas-sdk');
 const { ethers } = require('ethers');
 
+// // VALIDATE_ENV — fail fast with a clear message instead of cryptic ethers errors later
+const REQUIRED_ENV = ['EAS_CONTRACT_ADDRESS', 'RPC_URL', 'ATTESTER_PRIVATE_KEY', 'SCHEMA_UID'];
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    throw new Error(`// EAS_CONFIG_ERROR: missing required env var: ${key}`);
+  }
+}
+
 const EAS_CONTRACT = process.env.EAS_CONTRACT_ADDRESS;
 const RPC_URL = process.env.RPC_URL;
 const PRIVATE_KEY = process.env.ATTESTER_PRIVATE_KEY;
@@ -19,12 +27,12 @@ async function createAttestation(username, activity) {
   );
 
   const encodedData = schemaEncoder.encodeData([
-    { name: 'username', value: username, type: 'string' },
-    { name: 'total_commits', value: activity.total_commits, type: 'uint32' },
-    { name: 'total_prs_merged', value: activity.total_prs_merged, type: 'uint32' },
-    { name: 'velocity_score', value: activity.velocity_score, type: 'uint32' },
-    { name: 'period_start', value: activity.period_start, type: 'string' },
-    { name: 'period_end', value: activity.period_end, type: 'string' },
+    { name: 'username',         value: username,                   type: 'string' },
+    { name: 'total_commits',    value: activity.total_commits,     type: 'uint32' },
+    { name: 'total_prs_merged', value: activity.total_prs_merged,  type: 'uint32' },
+    { name: 'velocity_score',   value: activity.velocity_score,    type: 'uint32' },
+    { name: 'period_start',     value: activity.period_start,      type: 'string' },
+    { name: 'period_end',       value: activity.period_end,        type: 'string' },
   ]);
 
   const tx = await eas.attest({

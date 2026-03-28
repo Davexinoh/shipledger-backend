@@ -9,21 +9,28 @@ async function getGithubActivity(username, token) {
   const sinceISO = since.toISOString();
 
   // // GET_REPOS
-  const { data: repos } = await octokit.repos.listForUser({
-    username,
+  // listForAuthenticatedUser returns BOTH public and private repos for the authed user.
+  // listForUser (the old call) only returns public repos — missed private work entirely.
+  const { data: repos } = await octokit.repos.listForAuthenticatedUser({
     sort: 'pushed',
-    per_page: 10,
+    per_page: 30,       // bumped from 10 — active builders have many repos
+    visibility: 'all',  // public + private
   });
+
+  // Filter to repos the user owns or is a member of
+  const userRepos = repos.filter(
+    (r) => r.owner.login.toLowerCase() === username.toLowerCase()
+  );
 
   let totalCommits = 0;
   let totalPRs = 0;
   const activeRepos = [];
 
-  for (const repo of repos) {
+  for (const repo of userRepos) {
     // // COUNT_COMMITS
     try {
       const { data: commits } = await octokit.repos.listCommits({
-        owner: username,
+        owner: repo.owner.login,
         repo: repo.name,
         author: username,
         since: sinceISO,
@@ -39,24 +46,27 @@ async function getGithubActivity(username, token) {
         });
       }
     } catch {
-      // repo may be empty or inaccessible — skip
+      // repo may be empty, archived, or inaccessible — skip
     }
 
-    // // COUNT_PRS
+    // // COUNT_MERGED_PRS
     try {
       const { data: prs } = await octokit.pulls.list({
-        owner: username,
+        owner: repo.owner.login,
         repo: repo.name,
         state: 'closed',
         sort: 'updated',
         direction: 'desc',
-        per_page: 10,
+        per_page: 20,
       });
 
-      const recentPRs = prs.filter(
-        (pr) => pr.merged_at && new Date(pr.merged_at) >= since
+      const recentMerged = prs.filter(
+        (pr) =>
+          pr.merged_at &&
+          new Date(pr.merged_at) >= since &&
+          pr.user?.login?.toLowerCase() === username.toLowerCase()
       );
-      totalPRs += recentPRs.length;
+      totalPRs += recentMerged.length;
     } catch {
       // skip inaccessible repos
     }
