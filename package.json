@@ -1,0 +1,26 @@
+{
+  "name": "shipledger-backend",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "Davexinoh",
+  "license": "ISC",
+  "description": "ShipLedger backend — GitHub activity attestation engine on Base via EAS",
+  "dependencies": {
+    "@ethereum-attestation-service/eas-sdk": "^2.7.0",
+    "@octokit/rest": "^21.0.0",
+    "axios": "^1.7.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "ethers": "^6.13.0",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "nodemon": "^3.1.14"
+  }
+}
